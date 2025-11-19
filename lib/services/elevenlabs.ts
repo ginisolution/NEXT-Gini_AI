@@ -79,8 +79,14 @@ export async function listVoices(): Promise<
     throw new Error("Failed to fetch voices");
   }
 
+  interface Voice {
+    voice_id: string;
+    name: string;
+    labels?: { language?: string };
+  }
+
   const data = await response.json();
-  return data.voices.map((v: any) => ({
+  return data.voices.map((v: Voice) => ({
     voice_id: v.voice_id,
     name: v.name,
     language: v.labels?.language || "en",

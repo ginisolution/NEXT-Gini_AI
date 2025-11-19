@@ -6,15 +6,15 @@
 
 export { documentValidator } from "./documentValidator";
 export { sceneProcessor } from "./sceneProcessor";
+export { scriptGenerator } from "./scriptGenerator";
+export { ttsGenerator } from "./ttsGenerator";
+export { avatarGenerator } from "./avatarGenerator";
+export { avatarPolling } from "./avatarPolling";
+export { backgroundGenerator } from "./backgroundGenerator";
+export { veoVideoGenerator } from "./veoVideoGenerator";
+export { veoVideoPolling } from "./veoVideoPolling";
+export { videoCompositor } from "./videoCompositor";
+export { videoRender } from "./videoRender";
 
-// TODO: 아래 함수들은 외부 서비스 클라이언트 구현 후 추가
-// export { scriptGenerator } from "./scriptGenerator";
+// TODO: 구현 필요
 // export { avatarDesignGenerator } from "./avatarDesignGenerator";
-// export { ttsGenerator } from "./ttsGenerator";
-// export { avatarGenerator } from "./avatarGenerator";
-// export { avatarPoller } from "./avatarPoller";
-// export { backgroundGenerator } from "./backgroundGenerator";
-// export { veoGenerator } from "./veoGenerator";
-// export { veoPoller } from "./veoPoller";
-// export { videoCompositor } from "./videoCompositor";
-// export { videoRender } from "./videoRender";

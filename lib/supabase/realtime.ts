@@ -18,7 +18,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
  */
 export function subscribeToProjectStatus(
   projectId: string,
-  callback: (payload: any) => void
+  callback: (payload: Record<string, unknown>) => void
 ): RealtimeChannel {
   const supabase = createClient();
 
@@ -41,7 +41,7 @@ export function subscribeToProjectStatus(
  */
 export function subscribeToDocumentStatus(
   documentId: string,
-  callback: (payload: any) => void
+  callback: (payload: Record<string, unknown>) => void
 ): RealtimeChannel {
   const supabase = createClient();
 
@@ -64,7 +64,7 @@ export function subscribeToDocumentStatus(
  */
 export function subscribeToSceneStatus(
   sceneId: string,
-  callback: (payload: any) => void
+  callback: (payload: Record<string, unknown>) => void
 ): RealtimeChannel {
   const supabase = createClient();
 
@@ -86,7 +86,7 @@ export function subscribeToSceneStatus(
  */
 export async function broadcastStatus(
   channelName: string,
-  payload: any
+  payload: Record<string, unknown>
 ): Promise<void> {
   const supabase = createClient();
 

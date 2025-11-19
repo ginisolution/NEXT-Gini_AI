@@ -82,10 +82,11 @@ export async function POST(request: Request) {
             projectId: renderJob.projectId,
             sceneId,
             kind: "avatar_video",
+            type: "avatar_video",
+            url: result_url,
             storageProvider: "supabase",
             storageBucket: "assets",
             storagePath: `projects/${renderJob.projectId}/scenes/${sceneId}/avatar.mp4`,
-            fileUrl: result_url,
             metadata: {
               didTalkId,
               durationSeconds: body.duration || null,

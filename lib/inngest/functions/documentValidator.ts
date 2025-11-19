@@ -30,13 +30,15 @@ export const documentValidator = inngest.createFunction(
 
     // 검증 (현재는 간단한 체크만)
     await step.run("validate-pdf", async () => {
-      const metadata = document.metadata as any;
+      const metadata = document.metadata as Record<string, unknown>;
+      const fileSize = typeof metadata.fileSize === "number" ? metadata.fileSize : 0;
+      const mimeType = typeof metadata.mimeType === "string" ? metadata.mimeType : "";
 
-      if (metadata.fileSize > 10 * 1024 * 1024) {
+      if (fileSize > 10 * 1024 * 1024) {
         throw new Error("File size exceeds 10MB limit");
       }
 
-      if (metadata.mimeType !== "application/pdf") {
+      if (mimeType !== "application/pdf") {
         throw new Error("File must be PDF");
       }
 

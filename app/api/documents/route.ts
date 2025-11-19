@@ -66,12 +66,12 @@ export async function POST(request: Request) {
       data: {
         projectId,
         status: "pending",
+        storagePath: path,
         fileUrl: url,
         metadata: {
           fileName: file.name,
           fileSize: file.size,
           mimeType: file.type,
-          storagePath: path,
           uploadedBy: session.user.id,
         },
       },

@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ProjectList } from "@/components/projects/project-list";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -9,27 +11,21 @@ export default async function DashboardPage() {
     redirect("/auth/signin");
   }
 
-  // 프로젝트 목록은 클라이언트에서 fetch
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow-sm">
+    <div className="min-h-screen bg-background">
+      <nav className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">
-                Gini AI Dashboard
-              </h1>
+              <h1 className="text-xl font-bold">Gini AI Dashboard</h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-muted-foreground">
                 {session.user.email}
               </span>
-              <Link
-                href="/auth/signout"
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                로그아웃
-              </Link>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/auth/signout">로그아웃</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -38,25 +34,18 @@ export default async function DashboardPage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold text-gray-900">
-              프로젝트
-            </h2>
-            <Link
-              href="/dashboard/projects/new"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              + 새 프로젝트
-            </Link>
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">프로젝트</h2>
+              <p className="text-muted-foreground mt-1">
+                AI 아바타 영상 프로젝트를 관리하세요
+              </p>
+            </div>
+            <Button asChild>
+              <Link href="/dashboard/projects/new">+ 새 프로젝트</Link>
+            </Button>
           </div>
 
-          <div className="bg-white shadow rounded-lg p-6">
-            <p className="text-gray-600">
-              프로젝트 목록을 불러오는 중...
-            </p>
-            <p className="text-sm text-gray-500 mt-2">
-              (클라이언트 컴포넌트로 구현 필요)
-            </p>
-          </div>
+          <ProjectList />
         </div>
       </main>
     </div>

@@ -139,7 +139,8 @@ model Project {
   id          String   @id @default(cuid())
   title       String
   description String?  @db.Text
-  status      String   @default("draft") // draft, script_generating, script_generated, rendering, rendered, failed
+  status      String   @default("draft") // draft, document_uploaded, script_generating, script_generated, rendering, rendered, failed
+  duration    Int      @default(30) // 30, 60, 180 seconds
 
   // 조직 및 생성자
   organizationId String
@@ -147,6 +148,7 @@ model Project {
 
   // 설정
   settings Json? @default("{}")
+  metadata Json? @default("{}")
 
   // 커스텀 아바타
   avatarDesignMode     String? @default("preset") // preset, custom
@@ -156,6 +158,9 @@ model Project {
   // 배경 생성 비용
   backgroundTotalCost      Decimal? @db.Decimal(10, 2)
   backgroundCostBreakdown  Json?
+
+  // 최종 영상
+  finalVideoAssetId String?
 
   // 타임스탬프
   scriptGeneratedAt DateTime?
@@ -188,7 +193,8 @@ model Document {
   metadata  Json?    @default("{}")
 
   // Supabase Storage
-  fileUrl String?
+  storagePath String
+  fileUrl     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -210,23 +216,29 @@ model Scene {
   projectId      String
   sceneNumber    Int
   position       Int
-  script         String  @db.Text
+  script         String  @db.Text // 대본 텍스트
+  duration       Int     @default(15) // 씬 길이 (초)
   visualDescription String? @db.Text
   durationSeconds   Float?
+
+  // Asset Relations
+  audioAssetId      String?
+  avatarAssetId     String?
+  backgroundAssetId String?
 
   // TTS 설정
   ttsVoiceId String?
   ttsParams  Json?   @default("{}")
-  ttsStatus  String  @default("pending") // pending, processing, completed, failed
+  ttsStatus  String  @default("pending") // pending, generating, completed, failed
 
   // 아바타 설정
   avatarId     String?
   avatarParams Json?   @default("{}")
-  avatarStatus String  @default("pending") // pending, processing, completed, failed
+  avatarStatus String  @default("pending") // pending, generating, completed, failed
 
   // 배경 설정
   backgroundSettings Json?   @default("{}")
-  backgroundStatus   String  @default("pending") // pending, generating, generated, failed
+  backgroundStatus   String  @default("pending") // pending, generating, generated, failed, completed
   backgroundType     String? // veo_video, nano_image, ffmpeg_gradient
   backgroundAnalysis Json?
   backgroundMetadata Json?
@@ -240,7 +252,12 @@ model Scene {
 
   // Relations
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assets  Asset[]
+  assets  Asset[] @relation("SceneAssets")
+
+  // Explicit asset relations
+  audioAsset      Asset? @relation("AudioAsset", fields: [audioAssetId], references: [id], onDelete: SetNull)
+  avatarAsset     Asset? @relation("AvatarAsset", fields: [avatarAssetId], references: [id], onDelete: SetNull)
+  backgroundAsset Asset? @relation("BackgroundAsset", fields: [backgroundAssetId], references: [id], onDelete: SetNull)
 
   @@unique([projectId, sceneNumber])
   @@index([projectId])
@@ -257,20 +274,27 @@ model Asset {
   projectId String
   sceneId   String?
   kind      String  // audio, avatar_video, avatar_design, background_image, background_video, background_gradient, final_video, subtitle
+  type      String  // alias for kind (for backward compatibility)
+  url       String  // public URL
   metadata  Json?   @default("{}")
 
   // Supabase Storage
   storageProvider String  @default("supabase") // supabase, s3
   storageBucket   String  @default("assets")
   storagePath     String
-  fileUrl         String?
+  fileUrl         String? // alias for url
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  scene   Scene?  @relation(fields: [sceneId], references: [id], onDelete: SetNull)
+  scene   Scene?  @relation("SceneAssets", fields: [sceneId], references: [id], onDelete: SetNull)
+
+  // Reverse relations for explicit asset types
+  audioScenes      Scene[] @relation("AudioAsset")
+  avatarScenes     Scene[] @relation("AvatarAsset")
+  backgroundScenes Scene[] @relation("BackgroundAsset")
 
   @@index([projectId])
   @@index([sceneId])
@@ -285,9 +309,13 @@ model Asset {
 model RenderJob {
   id           String    @id @default(cuid())
   projectId    String
+  sceneId      String?
   status       String    @default("pending") // pending, processing, completed, failed
-  traceId      String    @unique
+  provider     String?   // did, veo
+  externalId   String?   // D-ID talk ID or Veo operation name
+  traceId      String?   @unique
   params       Json?     @default("{}")
+  metadata     Json?     @default("{}")
   errorMessage String?   @db.Text
   completedAt  DateTime?
   createdAt    DateTime  @default(now())
@@ -297,6 +325,8 @@ model RenderJob {
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@index([sceneId])
   @@index([status])
+  @@index([externalId])
   @@map("render_jobs")
 }
