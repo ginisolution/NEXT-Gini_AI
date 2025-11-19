@@ -1,5 +1,10 @@
 import "server-only";
 import { VertexAI, HarmBlockThreshold, HarmCategory } from "@google-cloud/vertexai";
+import {
+  getGoogleCredentials,
+  getGoogleProjectId,
+  getGoogleLocation,
+} from "@/lib/google/credentials";
 
 /**
  * Google Vertex AI 서비스
@@ -9,12 +14,18 @@ import { VertexAI, HarmBlockThreshold, HarmCategory } from "@google-cloud/vertex
  * - Veo 3.1: 씬 배경 영상 (image-to-video)
  */
 
-const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT!;
-const LOCATION = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
+const PROJECT_ID = getGoogleProjectId();
+const LOCATION = getGoogleLocation();
+const credentials = getGoogleCredentials();
 
 const vertexAI = new VertexAI({
   project: PROJECT_ID,
   location: LOCATION,
+  ...(credentials && {
+    googleAuthOptions: {
+      credentials,
+    },
+  }),
 });
 
 /**

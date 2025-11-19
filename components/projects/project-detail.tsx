@@ -107,6 +107,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
   const [editedScript, setEditedScript] = useState("");
   const [editedVisualDescription, setEditedVisualDescription] = useState("");
   const [saving, setSaving] = useState(false);
+  const [processingScenes, setProcessingScenes] = useState(false);
 
   useEffect(() => {
     fetchProject();
@@ -200,6 +201,29 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
       await fetchProject();
     } catch (err) {
       alert(err instanceof Error ? err.message : "알 수 없는 오류");
+    }
+  }
+
+  async function handleProcessScenes() {
+    if (!confirm("씬 처리를 시작하시겠습니까? (TTS → 아바타 → 배경)")) return;
+
+    setProcessingScenes(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/process-scenes`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "씬 처리 시작에 실패했습니다.");
+      }
+
+      alert("씬 처리가 시작되었습니다.");
+      await fetchProject();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "알 수 없는 오류");
+    } finally {
+      setProcessingScenes(false);
     }
   }
 
@@ -394,20 +418,20 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
             <div>
               <div className="text-muted-foreground">문서</div>
               <div className="font-medium mt-1">
-                {project._count?.documents || 0}개
+                {project.documents?.length || 0}개
               </div>
             </div>
             <div>
               <div className="text-muted-foreground">씬</div>
               <div className="font-medium mt-1">
-                {project._count?.scenes || 0}개
+                {project.scenes?.length || 0}개
               </div>
             </div>
           </div>
         </CardContent>
         <CardFooter className="flex justify-between gap-2">
           <div className="flex gap-2">
-            {(project._count?.documents ?? 0) > 0 && (project._count?.scenes ?? 0) === 0 && (
+            {(project.documents?.length ?? 0) > 0 && (project.scenes?.length ?? 0) === 0 && (
               <Button
                 onClick={handleGenerateScript}
                 disabled={generatingScript}
@@ -415,6 +439,16 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
               >
                 <FileText className="h-4 w-4 mr-2" />
                 {generatingScript ? "스크립트 생성 중..." : "스크립트 생성"}
+              </Button>
+            )}
+            {(project.scenes?.length ?? 0) > 0 && project.status !== "rendering" && project.status !== "rendered" && (
+              <Button
+                onClick={handleProcessScenes}
+                disabled={processingScenes}
+                variant="secondary"
+              >
+                <Film className="h-4 w-4 mr-2" />
+                {processingScenes ? "씬 처리 중..." : "씬 처리 시작"}
               </Button>
             )}
             {project.status !== "rendering" && project.status !== "rendered" && (
@@ -616,42 +650,42 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                     if (!project.avatarDesignSettings) return null;
                     const settings = project.avatarDesignSettings as { gender?: string; ageRange?: string; style?: string; expression?: string; background?: string };
                     return (
-                    <div className="grid grid-cols-2 gap-4 w-full max-w-md text-sm">
-                      {settings.gender && (
-                        <div>
-                          <span className="text-muted-foreground">성별:</span>{" "}
-                          <span className="font-medium">
-                            {settings.gender === "male" ? "남성" : "여성"}
-                          </span>
-                        </div>
-                      )}
-                      {settings.ageRange && (
-                        <div>
-                          <span className="text-muted-foreground">나이:</span>{" "}
-                          <span className="font-medium">
-                            {settings.ageRange}
-                          </span>
-                        </div>
-                      )}
-                      {settings.style && (
-                        <div>
-                          <span className="text-muted-foreground">스타일:</span>{" "}
-                          <span className="font-medium">
-                            {settings.style}
-                          </span>
-                        </div>
-                      )}
-                      {settings.expression && (
-                        <div>
-                          <span className="text-muted-foreground">표정:</span>{" "}
-                          <span className="font-medium">
-                            {settings.expression}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                      <div className="grid grid-cols-2 gap-4 w-full max-w-md text-sm">
+                        {settings.gender && (
+                          <div>
+                            <span className="text-muted-foreground">성별:</span>{" "}
+                            <span className="font-medium">
+                              {settings.gender === "male" ? "남성" : "여성"}
+                            </span>
+                          </div>
+                        )}
+                        {settings.ageRange && (
+                          <div>
+                            <span className="text-muted-foreground">나이:</span>{" "}
+                            <span className="font-medium">
+                              {settings.ageRange}
+                            </span>
+                          </div>
+                        )}
+                        {settings.style && (
+                          <div>
+                            <span className="text-muted-foreground">스타일:</span>{" "}
+                            <span className="font-medium">
+                              {settings.style}
+                            </span>
+                          </div>
+                        )}
+                        {settings.expression && (
+                          <div>
+                            <span className="text-muted-foreground">표정:</span>{" "}
+                            <span className="font-medium">
+                              {settings.expression}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })()}

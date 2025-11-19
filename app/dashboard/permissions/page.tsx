@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Users, Lock } from "lucide-react";
 import { PermissionManager } from "@/components/permissions/permission-manager";
+import { DashboardNavbar } from "@/components/dashboard/navbar";
 
 export default async function PermissionsPage() {
   const session = await auth();
@@ -87,13 +88,18 @@ export default async function PermissionsPage() {
   const totalPermissions = relationTuples.length + projectRelationTuples.length;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">권한 관리</h1>
-        <p className="text-muted-foreground mt-2">
-          프로젝트별 사용자 권한을 관리합니다
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <DashboardNavbar userEmail={session.user.email || ""} userRole={session.user.role || "member"} />
+
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">권한 관리</h1>
+              <p className="text-muted-foreground mt-1">
+                프로젝트별 사용자 권한을 관리합니다
+              </p>
+            </div>
 
       {/* 요약 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -207,6 +213,9 @@ export default async function PermissionsPage() {
           };
         })}
       />
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

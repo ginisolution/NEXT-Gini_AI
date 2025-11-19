@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { check, NAMESPACES, RELATIONS } from "@/lib/permissions";
 import { downloadFile } from "@/lib/supabase/storage";
+import { inngest } from "@/lib/inngest/client";
 import { NextResponse } from "next/server";
 import { VertexAI } from "@google-cloud/vertexai";
 
@@ -170,8 +171,31 @@ PDF 문서를 분석하여 ${project.duration}초 분량의 발표 대본을 생
       },
     });
 
+    // 워크플로우 자동 실행: 커스텀 아바타 생성 + 씬 처리
+    // 1. 커스텀 아바타 모드면 아바타 디자인 생성 이벤트
+    if (project.avatarDesignMode === "custom") {
+      await inngest.send({
+        name: "avatar-design/generation.requested",
+        data: {
+          projectId,
+        },
+      });
+    }
+
+    // 2. 첫 번째 씬부터 순차 처리 시작 (TTS → 아바타 → 배경)
+    if (scenes.length > 0) {
+      await inngest.send({
+        name: "scene/process.requested",
+        data: {
+          projectId,
+          sceneId: scenes[0].id,
+          userId: session.user.id,
+        },
+      });
+    }
+
     return NextResponse.json({
-      message: "스크립트 생성 완료",
+      message: "스크립트 생성 및 워크플로우 시작 완료",
       scenesCount: scenes.length,
       scenes,
     });

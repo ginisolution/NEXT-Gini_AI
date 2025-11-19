@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ProjectList } from "@/components/projects/project-list";
+import { DashboardNavbar } from "@/components/dashboard/navbar";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -13,23 +14,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-bold">Gini AI Dashboard</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                {session.user.email}
-              </span>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/auth/signout">로그아웃</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <DashboardNavbar userEmail={session.user.email || ""} userRole={session.user.role || "member"} />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">

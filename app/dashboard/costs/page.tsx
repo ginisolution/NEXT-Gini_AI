@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Calendar, Film } from "lucide-react";
+import { DashboardNavbar } from "@/components/dashboard/navbar";
 
 export default async function CostsPage() {
   const session = await auth();
@@ -119,13 +120,18 @@ export default async function CostsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">비용 대시보드</h1>
-        <p className="text-muted-foreground mt-2">
-          API 사용 비용을 추적하고 분석합니다
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <DashboardNavbar userEmail={session.user.email || ""} userRole={session.user.role || "member"} />
+
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">비용 대시보드</h1>
+              <p className="text-muted-foreground mt-1">
+                API 사용 비용을 추적하고 분석합니다
+              </p>
+            </div>
 
       {/* 요약 카드 */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -303,6 +309,9 @@ export default async function CostsPage() {
           </div>
         </CardContent>
       </Card>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
