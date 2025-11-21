@@ -270,8 +270,8 @@ export async function generateVeoVideo(
   const imageBase64 = Buffer.from(imageBuffer).toString("base64");
   console.log(`✅ Image downloaded: ${imageBuffer.byteLength} bytes → ${imageBase64.length} base64 chars`);
 
-  // Veo 3.1 API 엔드포인트 (predictLongRunning 사용)
-  const endpoint = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/veo-3.1-generate-preview:predictLongRunning`;
+  // Veo 3.0 Fast API 엔드포인트 (predictLongRunning 사용)
+  const endpoint = `https://${LOCATION}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${LOCATION}/publishers/google/models/veo-3.0-fast-generate-001:predictLongRunning`;
 
   // 영화 품질 프롬프트 강화
   const cinematicPrompt = enhanceCinematicPrompt(prompt);
@@ -389,20 +389,24 @@ export async function checkVeoOperation(operationName: string): Promise<{
   const locationMatch = operationName.match(/\/locations\/([^\/]+)\//);
   const operationLocation = locationMatch ? locationMatch[1] : LOCATION;
 
-  // LRO 상태 확인 엔드포인트
-  // Veo preview API는 operation name을 그대로 사용
-  // operationName 형식: "projects/{project}/locations/{location}/publishers/google/models/{model}/operations/{operation}"
-  const endpoint = `https://${operationLocation}-aiplatform.googleapis.com/v1/${operationName}`;
+  // LRO 상태 확인 엔드포인트 (공식 문서 준수: fetchPredictOperation 사용)
+  // POST 방식으로 operationName을 body에 포함하여 전송
+  const endpoint = `https://${operationLocation}-aiplatform.googleapis.com/v1/projects/${PROJECT_ID}/locations/${operationLocation}/publishers/google/models/veo-3.0-fast-generate-001:fetchPredictOperation`;
 
-  console.log(`🔍 Veo LRO polling:`);
+  console.log(`🔍 Veo LRO polling (fetchPredictOperation):`);
   console.log(`   Operation location: ${operationLocation}`);
+  console.log(`   Operation name: ${operationName}`);
   console.log(`   Endpoint: ${endpoint}`);
 
   const response = await fetch(endpoint, {
-    method: "GET",
+    method: "POST",
     headers: {
       Authorization: `Bearer ${accessTokenResponse.token}`,
+      "Content-Type": "application/json",
     },
+    body: JSON.stringify({
+      operationName,
+    }),
   });
 
   if (!response.ok) {
