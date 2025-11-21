@@ -165,7 +165,7 @@ export const scriptGenerator = inngest.createFunction(
               imagePrompt: scene.imagePrompt || null,
               videoPrompt: scene.videoPrompt || null,
               backgroundAnalysis: {
-                priority: scene.priority || "high", // 기본값: high (Veo 영상 생성)
+                priority: "high", // 모든 씬 강제 High (Veo 영상 생성)
                 visualDescription: scene.visualDescription || "",
               },
               ttsStatus: "pending",
