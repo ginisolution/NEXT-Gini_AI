@@ -177,6 +177,16 @@ export const avatarDesignGenerator = inngest.createFunction(
       });
     });
 
+    // 7. 완료 이벤트 전송 (씬 처리가 대기 중일 수 있음)
+    await step.sendEvent("notify-avatar-design-completed", {
+      name: "avatar-design/completed",
+      data: {
+        projectId,
+        assetId: asset.id,
+        imageUrl,
+      },
+    });
+
     return {
       success: true,
       projectId,

@@ -40,6 +40,49 @@ export const sceneProcessor = inngest.createFunction(
       throw new Error(`Scene not found: ${sceneId}`);
     }
 
+    // 커스텀 아바타 모드면 생성 완료 대기
+    const needsAvatarWait = await step.run("check-avatar-design-status", async () => {
+      if (scene.project.avatarDesignMode !== "custom") {
+        console.log(`📸 Preset avatar mode - no wait needed for project ${projectId}`);
+        return false; // 프리셋 모드는 대기 불필요
+      }
+
+      // 현재 상태 재조회
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        select: { avatarDesignStatus: true },
+      });
+
+      const needsWait = project?.avatarDesignStatus !== "completed";
+
+      if (needsWait) {
+        console.log(`⏳ Custom avatar not ready yet for project ${projectId} - will wait`);
+      } else {
+        console.log(`✅ Custom avatar already ready for project ${projectId}`);
+      }
+
+      return needsWait;
+    });
+
+    if (needsAvatarWait) {
+      console.log(`⏳ Waiting for custom avatar design completion for project ${projectId}`);
+
+      try {
+        await step.waitForEvent("wait-for-avatar-design", {
+          event: "avatar-design/completed",
+          timeout: "3m", // 최대 3분 대기
+          match: "data.projectId",
+        });
+
+        console.log(`✅ Custom avatar design ready for project ${projectId}`);
+      } catch {
+        console.warn(
+          `⚠️  Timeout waiting for custom avatar design for project ${projectId}. Will fall back to preset avatar.`
+        );
+        // 타임아웃 시에도 계속 진행 (avatarGenerator에서 폴백 처리)
+      }
+    }
+
     // Step 1: TTS 생성
     await step.sendEvent("trigger-tts", {
       name: "tts/generation.requested", // ttsGenerator가 리스닝하는 정확한 이벤트명
