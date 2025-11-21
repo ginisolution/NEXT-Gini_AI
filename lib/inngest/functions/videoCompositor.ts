@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export const videoCompositor = inngest.createFunction(
   { id: "video-compositor" },
-  { event: "video/composition.requested" },
+  { event: "video/compose.requested" },
   async ({ event, step }) => {
     const { projectId } = event.data;
 

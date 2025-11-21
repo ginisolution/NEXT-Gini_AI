@@ -471,40 +471,51 @@ export async function checkVeoOperation(operationName: string): Promise<{
     }
 
     const videoFile = videos[0];
-    const gcsUri = videoFile.gcsUri;
+    let videoBuffer: Buffer;
 
-    if (!gcsUri) {
-      console.error(`❌ No GCS URI in video file!`);
+    // Case 1: GCS URI로 반환된 경우 (outputGcsUri 지정 시)
+    if (videoFile.gcsUri) {
+      const gcsUri = videoFile.gcsUri;
+      console.log(`📹 Downloading Veo video from GCS: ${gcsUri}`);
+
+      // GCS URI 파싱: gs://bucket-name/path/to/file.mp4
+      const match = gcsUri.match(/^gs:\/\/([^\/]+)\/(.+)$/);
+      if (!match) {
+        console.error(`❌ Invalid GCS URI format: ${gcsUri}`);
+        throw new Error(`Invalid GCS URI format: ${gcsUri}`);
+      }
+
+      const [, bucketName, filePath] = match;
+
+      console.log(`📦 GCS download details:`);
+      console.log(`   Bucket: ${bucketName}`);
+      console.log(`   File path: ${filePath}`);
+
+      // Cloud Storage 클라이언트로 파일 다운로드
+      const storage = new Storage({
+        ...(credentials && { credentials }),
+      });
+
+      const bucket = storage.bucket(bucketName);
+      const file = bucket.file(filePath);
+
+      const [downloadedBuffer] = await file.download();
+      videoBuffer = downloadedBuffer;
+
+      console.log(`✅ Veo video downloaded from GCS: ${videoBuffer.length} bytes`);
+    }
+    // Case 2: Base64로 반환된 경우 (outputGcsUri 미지정 시 - 기본값)
+    else if (videoFile.bytesBase64Encoded) {
+      console.log(`📹 Veo video returned as Base64 (no GCS bucket specified)`);
+      videoBuffer = Buffer.from(videoFile.bytesBase64Encoded, "base64");
+      console.log(`✅ Veo video decoded from Base64: ${videoBuffer.length} bytes`);
+    }
+    // Case 3: 둘 다 없는 경우 - 에러
+    else {
+      console.error(`❌ No video data in response!`);
       console.error(`   Video file structure:`, JSON.stringify(videoFile, null, 2));
-      throw new Error("No GCS URI in operation response");
+      throw new Error("No gcsUri or bytesBase64Encoded in operation response");
     }
-
-    console.log(`📹 Downloading Veo video from GCS: ${gcsUri}`);
-
-    // GCS URI 파싱: gs://bucket-name/path/to/file.mp4
-    const match = gcsUri.match(/^gs:\/\/([^\/]+)\/(.+)$/);
-    if (!match) {
-      console.error(`❌ Invalid GCS URI format: ${gcsUri}`);
-      throw new Error(`Invalid GCS URI format: ${gcsUri}`);
-    }
-
-    const [, bucketName, filePath] = match;
-
-    console.log(`📦 GCS download details:`);
-    console.log(`   Bucket: ${bucketName}`);
-    console.log(`   File path: ${filePath}`);
-
-    // Cloud Storage 클라이언트로 파일 다운로드
-    const storage = new Storage({
-      ...(credentials && { credentials }),
-    });
-
-    const bucket = storage.bucket(bucketName);
-    const file = bucket.file(filePath);
-
-    const [videoBuffer] = await file.download();
-
-    console.log(`✅ Veo video downloaded: ${videoBuffer.length} bytes`);
 
     return {
       done: true,
