@@ -68,6 +68,7 @@ export const avatarDesignGenerator = inngest.createFunction(
       style: string;
       expression: string;
       background: string;
+      nationality?: string;
     };
 
     // 3. Imagen API로 아바타 이미지 생성 및 업로드 (Inngest output size 제한 회피)

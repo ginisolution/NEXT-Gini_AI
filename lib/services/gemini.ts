@@ -144,6 +144,7 @@ export async function generateAvatarDesign(settings: {
   style: string;
   expression: string;
   background: string;
+  nationality?: string;
 }): Promise<Buffer> {
   // 프롬프트 생성
   const prompt = buildAvatarPrompt(settings);
@@ -187,12 +188,24 @@ function buildAvatarPrompt(settings: {
   style: string;
   expression: string;
   background: string;
+  nationality?: string;
 }): string {
-  const { gender, ageRange, style, expression, background } = settings;
+  const { gender, ageRange, style, expression, background, nationality } = settings;
+
+  // 국적에 따른 ethnicity 설명 추가
+  const ethnicityMap: Record<string, string> = {
+    korean: "East Asian, Korean ethnicity",
+    japanese: "East Asian, Japanese ethnicity",
+    american: "Caucasian, American ethnicity",
+  };
+
+  const ethnicityDescription = nationality
+    ? ethnicityMap[nationality.toLowerCase()] || "diverse ethnicity"
+    : "diverse ethnicity";
 
   return `
 A photorealistic portrait of a ${gender} person in their ${ageRange},
-${style} style, with a ${expression} expression.
+${ethnicityDescription}, ${style} style, with a ${expression} expression.
 Background: ${background}.
 Professional headshot, centered composition, 1:1 aspect ratio,
 8k resolution, raw photo, hyper-realistic, detailed skin texture, cinematic lighting, depth of field,

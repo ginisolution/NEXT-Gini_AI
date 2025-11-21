@@ -38,6 +38,7 @@ export function ProjectForm() {
       style: "professional" as "professional" | "casual" | "friendly",
       expression: "neutral" as "neutral" | "smile" | "confident",
       background: "gradient" as "gradient" | "solid" | "office",
+      nationality: "korean" as "korean" | "japanese" | "american",
     },
   });
 
@@ -237,6 +238,32 @@ export function ProjectForm() {
                         <SelectItem value="30s">30대</SelectItem>
                         <SelectItem value="40s">40대</SelectItem>
                         <SelectItem value="50s">50대</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 국적 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="nationality">국적</Label>
+                    <Select
+                      value={formData.avatarDesignSettings.nationality}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          avatarDesignSettings: {
+                            ...formData.avatarDesignSettings,
+                            nationality: value as "korean" | "japanese" | "american",
+                          },
+                        })
+                      }
+                    >
+                      <SelectTrigger id="nationality">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="korean">한국</SelectItem>
+                        <SelectItem value="japanese">일본</SelectItem>
+                        <SelectItem value="american">미국</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
