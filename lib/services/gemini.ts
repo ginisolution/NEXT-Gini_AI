@@ -40,7 +40,7 @@ export async function generateScript(
   duration: 30 | 60 | 180
 ) {
   const model = vertexAI.getGenerativeModel({
-    model: "gemini-2.0-flash-exp",
+    model: "gemini-2.5-pro",
     generationConfig: {
       temperature: 0.7,
       maxOutputTokens: 8192,
@@ -62,7 +62,12 @@ export async function generateScript(
 1. 전체 영상 길이: 정확히 ${duration}초
 2. 씬 구성: 8초씩 나눠서 총 ${duration / 8}개 씬 (Veo 3.1 영상 길이에 맞춤)
 3. 각 씬마다 다음 정보를 포함:
-   - 대본 (script): 아바타가 말할 내용 (정확히 8초 분량)
+   - 대본 (script): 아바타가 말할 내용
+     * **길이 제한: 35-45자 이내 (공백 제외, 한국어 기준)**
+     * **예상 시간: 7-8초 분량 (초당 5-6자 기준)**
+     * **작성 원칙: 간결하고 핵심만 전달, 불필요한 수식어와 연결어 최소화**
+     * 좋은 예: "v1.0은 코드 중심 협업 시대를 열었습니다." (22자, 약 4초)
+     * 나쁜 예: "그래서 v1.0에서는 팀 전체가 바이브 코딩을 하는 시대로 전환했습니다. 기존 방식을 버리고 새로운 소통 방식을 도입했죠..." (60자+, 12초+)
    - 시각적 설명 (visualDescription): 배경에 표시할 내용 설명 (하위 호환성용)
    - 이미지 프롬프트 (imagePrompt): Nano Banana 이미지 생성 모델용 프롬프트
      * 16:9 비율, 포토리얼리스틱 스타일
@@ -80,7 +85,7 @@ export async function generateScript(
   "scenes": [
     {
       "sceneNumber": 1,
-      "script": "안녕하세요...",
+      "script": "v1.0은 코드 중심 협업 시대를 열었습니다.",
       "visualDescription": "현대적인 사무실 배경",
       "imagePrompt": "Modern office interior with large windows, soft natural daylight, minimalist wooden desk, potted plants, 16:9 composition, photorealistic, 8k quality, cinematic lighting",
       "videoPrompt": "Slow camera pan across the office space, subtle light movement through windows, smooth transition, 8 seconds duration",
