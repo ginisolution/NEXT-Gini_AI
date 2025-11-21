@@ -217,30 +217,47 @@ Front-facing view, suitable for video avatar animation.
 /**
  * Nano Banana - 씬 배경 이미지 생성
  *
- * @param visualDescription - 시각적 설명
+ * @param imagePrompt - 이미지 생성 프롬프트 (16:9, photorealistic)
  * @returns 생성된 이미지 Buffer
  */
 export async function generateBackgroundImage(
-  visualDescription: string
+  imagePrompt: string
 ): Promise<Buffer> {
-  // TODO: Vertex AI Imagen API 구현
-  // 현재는 placeholder - 1x1 투명 PNG 반환
+  console.log(`🎨 Generating background image with Gemini 2.5 Flash Image`);
+  console.log(`   Prompt: ${imagePrompt.substring(0, 150)}...`);
 
-  // 1x1 투명 PNG (89 bytes)
-  const pngData = Buffer.from([
-    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-    0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
-    0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-    0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
-    0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41,
-    0x54, 0x78, 0x9c, 0x63, 0x00, 0x01, 0x00, 0x00,
-    0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00,
-    0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
-    0x42, 0x60, 0x82
-  ]);
+  // Gemini 2.5 Flash Image 모델 사용 (generateAvatarDesign과 동일)
+  const model = vertexAI.getGenerativeModel({
+    model: "gemini-2.5-flash-image",
+  });
 
-  console.warn(`Using placeholder image for: ${visualDescription}`);
-  return pngData;
+  const result = await model.generateContent({
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: imagePrompt }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.4,
+      candidateCount: 1,
+    },
+  });
+
+  // 이미지 데이터 추출 (generateAvatarDesign과 동일한 방식)
+  const imageData = result.response.candidates?.[0]?.content?.parts?.[0];
+  if (!imageData || !("inlineData" in imageData)) {
+    console.error("❌ No image data in Gemini response");
+    console.error("   Full response:", JSON.stringify(result.response, null, 2));
+    throw new Error("No image data in Gemini response");
+  }
+
+  // Base64 디코딩하여 Buffer 반환
+  const base64Data = imageData.inlineData?.data || "";
+  const buffer = Buffer.from(base64Data, "base64");
+
+  console.log(`✅ Background image generated: ${buffer.length} bytes`);
+  return buffer;
 }
 
 /**

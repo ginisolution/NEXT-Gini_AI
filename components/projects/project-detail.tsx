@@ -72,6 +72,9 @@ interface Scene {
     visualDescription?: string;
   };
   assets?: Asset[];
+  audioAsset?: Asset | null;
+  avatarAsset?: Asset | null;
+  backgroundAsset?: Asset | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -909,70 +912,6 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                               생성된 자산
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {/* TTS 오디오 */}
-                              {(() => {
-                                const audioAsset = scene.assets.find((a) => a.kind === "audio");
-                                if (!audioAsset) return null;
-
-                                return (
-                                  <div className="border rounded-lg p-3 bg-muted/30">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Volume2 className="h-4 w-4 text-blue-600" />
-                                      <span className="text-xs font-medium">TTS 오디오</span>
-                                    </div>
-                                    <audio
-                                      controls
-                                      className="w-full h-8"
-                                      src={audioAsset.url}
-                                    >
-                                      브라우저가 오디오를 지원하지 않습니다.
-                                    </audio>
-                                  </div>
-                                );
-                              })()}
-
-                              {/* 아바타 영상 */}
-                              {(() => {
-                                const avatarAsset = scene.assets.find((a) => a.kind === "avatar_video");
-                                if (!avatarAsset) return null;
-
-                                return (
-                                  <div className="border rounded-lg p-3 bg-muted/30">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Video className="h-4 w-4 text-purple-600" />
-                                      <span className="text-xs font-medium">아바타 영상</span>
-                                    </div>
-                                    <video
-                                      controls
-                                      className="w-full rounded border border-border"
-                                      src={avatarAsset.url}
-                                    >
-                                      브라우저가 비디오를 지원하지 않습니다.
-                                    </video>
-                                  </div>
-                                );
-                              })()}
-
-                              {/* 배경 이미지 */}
-                              {(() => {
-                                const bgImageAsset = scene.assets.find((a) => a.kind === "background_image");
-                                if (!bgImageAsset) return null;
-
-                                return (
-                                  <div className="border rounded-lg p-3 bg-muted/30">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Image className="h-4 w-4 text-green-600" />
-                                      <span className="text-xs font-medium">배경 이미지</span>
-                                    </div>
-                                    <img
-                                      src={bgImageAsset.url}
-                                      alt="Background"
-                                      className="w-full rounded border border-border"
-                                    />
-                                  </div>
-                                );
-                              })()}
-
                               {/* 배경 영상 */}
                               {(() => {
                                 const bgVideoAsset = scene.assets.find((a) => a.kind === "background_video");

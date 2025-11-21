@@ -57,6 +57,9 @@ export async function GET(request: Request, { params }: { params: Params }) {
             assets: {
               orderBy: { createdAt: "desc" },
             },
+            audioAsset: true,
+            avatarAsset: true,
+            backgroundAsset: true,
           },
         },
         assets: {
