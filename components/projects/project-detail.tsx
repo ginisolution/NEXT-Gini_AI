@@ -35,7 +35,6 @@ import {
 import { Film, FileText, Upload, Play, Trash2, Pencil, Save, X } from "lucide-react";
 import { ProjectStatus } from "@/components/realtime/project-status";
 import { SceneProgress } from "@/components/realtime/scene-progress";
-import { VideoPlayer } from "@/components/video/video-player";
 
 interface Document {
   id: string;
@@ -211,23 +210,39 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
     }
   }
 
-  async function handleStartRender() {
-    if (!confirm("영상 렌더링을 시작하시겠습니까?")) return;
+  async function handleRenderAndDownload() {
+    if (!confirm("영상 렌더링을 시작하고 다운로드하시겠습니까?\n(렌더링은 약 20-60초 소요됩니다)")) return;
 
+    setGeneratingScript(true); // 렌더링 중 표시용 (임시)
     try {
-      const response = await fetch(`/api/projects/${projectId}/render`, {
+      const response = await fetch(`/api/projects/${projectId}/render-download`, {
         method: "POST",
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || "렌더링 시작에 실패했습니다.");
+        throw new Error(data.error || "렌더링에 실패했습니다.");
       }
 
-      alert("렌더링이 시작되었습니다.");
+      // Blob으로 응답 받기
+      const blob = await response.blob();
+
+      // 다운로드 트리거
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${project?.title || "video"}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      alert("렌더링이 완료되어 다운로드가 시작되었습니다.");
       await fetchProject();
     } catch (err) {
       alert(err instanceof Error ? err.message : "알 수 없는 오류");
+    } finally {
+      setGeneratingScript(false);
     }
   }
 
@@ -472,7 +487,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                 {generatingScript ? "스크립트 생성 중..." : "스크립트 생성"}
               </Button>
             )}
-            {(project.scenes?.length ?? 0) > 0 && project.status !== "rendering" && project.status !== "rendered" && (
+            {(project.scenes?.length ?? 0) > 0 && project.status === "script_generated" && (
               <Button
                 onClick={handleProcessScenes}
                 disabled={processingScenes}
@@ -482,10 +497,10 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
                 {processingScenes ? "씬 처리 중..." : "씬 처리 시작"}
               </Button>
             )}
-            {project.status !== "rendering" && project.status !== "rendered" && (
-              <Button onClick={handleStartRender}>
+            {project.status === "scenes_processed" && (
+              <Button onClick={handleRenderAndDownload} disabled={generatingScript}>
                 <Play className="h-4 w-4 mr-2" />
-                렌더링 시작
+                {generatingScript ? "렌더링 중..." : "비디오 렌더링 및 다운로드"}
               </Button>
             )}
           </div>
@@ -517,43 +532,25 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
         </CardFooter>
       </Card>
 
-      {/* 최종 영상 */}
-      {project.status === "rendered" && project.assets && (
+      {/* 렌더링 완료 안내 */}
+      {project.status === "rendered" && (
         <Card>
           <CardHeader>
-            <CardTitle>최종 영상</CardTitle>
+            <CardTitle>렌더링 완료</CardTitle>
             <CardDescription>
-              렌더링이 완료된 최종 영상입니다
+              영상이 성공적으로 렌더링되었습니다
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {(() => {
-              const finalVideo = project.assets.find(
-                (asset) => asset.kind === "final_video"
-              );
-
-              if (!finalVideo) {
-                return (
-                  <div className="text-center py-8 text-muted-foreground">
-                    최종 영상을 찾을 수 없습니다
-                  </div>
-                );
-              }
-
-              return (
-                <div className="space-y-4">
-                  <VideoPlayer src={finalVideo.url} className="w-full max-w-4xl mx-auto" />
-                  <div className="flex justify-center">
-                    <Button asChild>
-                      <a href={finalVideo.url} download target="_blank" rel="noopener noreferrer">
-                        <Film className="h-4 w-4 mr-2" />
-                        영상 다운로드
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              );
-            })()}
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                영상을 다시 다운로드하려면 아래 버튼을 클릭하세요.
+              </p>
+              <Button onClick={handleRenderAndDownload} disabled={generatingScript}>
+                <Play className="h-4 w-4 mr-2" />
+                {generatingScript ? "렌더링 중..." : "비디오 다시 다운로드"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

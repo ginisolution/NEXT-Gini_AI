@@ -13,4 +13,4 @@ export { backgroundGenerator } from "./backgroundGenerator";
 export { veoVideoGenerator } from "./veoVideoGenerator";
 export { veoVideoPolling } from "./veoVideoPolling";
 export { videoCompositor } from "./videoCompositor";
-export { videoRender } from "./videoRender";
+// export { videoRender } from "./videoRender"; // 비활성화: 즉시 다운로드 방식으로 변경
