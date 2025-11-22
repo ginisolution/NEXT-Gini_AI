@@ -295,7 +295,18 @@ async function validateAndSummarizeScript(script: string): Promise<string> {
 `.trim();
 
   const result = await model.generateContent(prompt);
-  const summarized = result.response.candidates?.[0].content.parts[0].text?.trim() || script;
+
+  // 안전한 응답 추출 (optional chaining 완전 적용)
+  const summarized = result.response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+  // Gemini 응답 실패 시 fallback: 강제 자르기
+  if (!summarized) {
+    console.warn(`⚠️ Gemini 요약 실패 → 강제 자르기`);
+    console.warn(`   Response structure:`, JSON.stringify(result.response, null, 2).substring(0, 500));
+    const trimmed = script.replace(/\s/g, "").slice(0, 35);
+    console.warn(`   강제 절단: "${trimmed}" (35자)`);
+    return trimmed;
+  }
 
   const summarizedLength = summarized.replace(/\s/g, "").length;
   console.log(`✅ 요약 완료: ${scriptLength}자 → ${summarizedLength}자`);
