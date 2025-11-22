@@ -149,34 +149,28 @@ export async function generateScript(
   console.log("📦 Parsed JSON:");
   console.log(JSON.stringify(parsedJson, null, 2));
 
-  // 🚨 스크립트 길이 검증 (35자 초과 시 에러)
-  const MAX_SCRIPT_LENGTH = 35;
+  // 🚨 Gemini 2.5 Flash를 사용한 스크립트 검증 및 요약
+  console.log("\n🔍 스크립트 검증 및 요약 시작...");
   const invalidScenes: string[] = [];
 
-  parsedJson.scenes.forEach((scene: any, index: number) => {
-    const scriptLength = scene.script.replace(/\s/g, "").length;
-    const sceneNum = index + 1;
+  for (let i = 0; i < parsedJson.scenes.length; i++) {
+    const scene = parsedJson.scenes[i];
+    const sceneNum = i + 1;
+    const originalScript = scene.script;
 
-    console.log(`📏 씬 ${sceneNum} 스크립트 길이: ${scriptLength}자`);
+    console.log(`\n📝 씬 ${sceneNum} 처리 중...`);
+    console.log(`   원본: "${originalScript}" (${originalScript.replace(/\s/g, "").length}자)`);
 
-    if (scriptLength > MAX_SCRIPT_LENGTH) {
-      invalidScenes.push(
-        `씬 ${sceneNum}: ${scriptLength}자 (${scriptLength - MAX_SCRIPT_LENGTH}자 초과) - "${scene.script}"`
-      );
+    // 1. 금지된 패턴 검증 (요약 전)
+    if (originalScript.includes("(") || originalScript.includes(")")) {
+      invalidScenes.push(`씬 ${sceneNum}: 괄호 표현 포함 금지 - "${originalScript}"`);
     }
 
-    // 괄호 표현 검증
-    if (scene.script.includes("(") || scene.script.includes(")")) {
-      invalidScenes.push(`씬 ${sceneNum}: 괄호 표현 포함 금지 - "${scene.script}"`);
-    }
-
-    // 인사말 검증
     const greetings = ["안녕하세요", "안녕", "여러분", "반갑습니다"];
-    if (greetings.some((greeting) => scene.script.includes(greeting))) {
-      invalidScenes.push(`씨 ${sceneNum}: 인사말 포함 금지 - "${scene.script}"`);
+    if (greetings.some((greeting) => originalScript.includes(greeting))) {
+      invalidScenes.push(`씬 ${sceneNum}: 인사말 포함 금지 - "${originalScript}"`);
     }
 
-    // 설명문 검증
     const explanations = [
       "이야기하겠습니다",
       "소개합니다",
@@ -184,23 +178,97 @@ export async function generateScript(
       "말씀드리겠습니다",
       "에 대해",
     ];
-    if (explanations.some((exp) => scene.script.includes(exp))) {
-      invalidScenes.push(`씬 ${sceneNum}: 설명문 포함 금지 - "${scene.script}"`);
+    if (explanations.some((exp) => originalScript.includes(exp))) {
+      invalidScenes.push(`씬 ${sceneNum}: 설명문 포함 금지 - "${originalScript}"`);
     }
-  });
+
+    // 2. 길이 검증 및 AI 요약
+    try {
+      const summarized = await validateAndSummarizeScript(originalScript);
+      parsedJson.scenes[i].script = summarized;
+      console.log(`   ✅ 최종: "${summarized}" (${summarized.replace(/\s/g, "").length}자)`);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      invalidScenes.push(`씬 ${sceneNum}: 요약 실패 - ${errorMsg}`);
+      console.error(`   ❌ 요약 실패: ${errorMsg}`);
+    }
+  }
 
   // 검증 실패 시 에러 발생
   if (invalidScenes.length > 0) {
-    console.error("❌ 스크립트 검증 실패:");
+    console.error("\n❌ 스크립트 검증 실패:");
     invalidScenes.forEach((error) => console.error(`   - ${error}`));
     throw new Error(
       `스크립트 검증 실패 (${invalidScenes.length}개 씬):\n${invalidScenes.join("\n")}`
     );
   }
 
-  console.log("✅ 모든 씬 스크립트 검증 통과");
+  console.log("\n✅ 모든 씬 스크립트 검증 및 요약 완료");
 
   return parsedJson;
+}
+
+/**
+ * Gemini 2.5 Flash - 스크립트 길이 검증 및 요약
+ *
+ * @param script - 원본 스크립트
+ * @returns 35자 이내로 요약된 스크립트
+ */
+async function validateAndSummarizeScript(script: string): Promise<string> {
+  const scriptLength = script.replace(/\s/g, "").length;
+
+  // 이미 35자 이내면 그대로 반환
+  if (scriptLength <= 35) {
+    console.log(`✅ 스크립트 길이 OK: ${scriptLength}자`);
+    return script;
+  }
+
+  console.log(`⚠️ 스크립트 길이 초과: ${scriptLength}자 → 요약 필요`);
+
+  // Gemini 2.5 Flash 모델 사용 (빠르고 저렴)
+  const model = vertexAI.getGenerativeModel({
+    model: "gemini-2.5-flash",
+    generationConfig: {
+      temperature: 0.3, // 일관성 있는 요약
+      maxOutputTokens: 100,
+    },
+  });
+
+  const prompt = `
+다음 스크립트를 **정확히 35자 이내 (공백 제외)**로 요약하세요.
+
+원본 스크립트:
+"${script}"
+
+요구사항:
+1. 🚨 **절대 제한: 35자 이내 (공백 제외)**
+2. 핵심 메시지 1개만 유지
+3. 자연스러운 구어체 (~죠, ~네요, ~거든요)
+4. 인사말/설명문 절대 금지
+5. 괄호 표현 절대 금지
+6. 영어는 꼭 필요할 때만
+
+✅ 좋은 예시:
+- "컨텍스트가 코딩을 완전히 바꿔버렸어요." (21자)
+- "에이전트로 개발 속도가 3배나 빨라졌죠." (22자)
+
+**요약된 스크립트만 출력하세요 (설명 없이):**
+`.trim();
+
+  const result = await model.generateContent(prompt);
+  const summarized = result.response.candidates?.[0].content.parts[0].text?.trim() || script;
+
+  const summarizedLength = summarized.replace(/\s/g, "").length;
+  console.log(`✅ 요약 완료: ${scriptLength}자 → ${summarizedLength}자`);
+
+  // 요약 후에도 35자 초과 시 강제 자르기
+  if (summarizedLength > 35) {
+    const trimmed = summarized.replace(/\s/g, "").slice(0, 35);
+    console.warn(`⚠️ 요약 후에도 초과 → 강제 자르기: ${trimmed}`);
+    return trimmed;
+  }
+
+  return summarized;
 }
 
 /**
