@@ -167,7 +167,7 @@ export async function generateScript(
   let parsedJson;
   try {
     parsedJson = JSON.parse(text);
-  } catch (parseError) {
+  } catch {
     // JSON Schema가 있어도 드물게 실패할 수 있으므로 fallback
     console.warn("⚠️ Direct parse failed, trying regex extraction...");
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -563,7 +563,7 @@ export async function generateBackgroundImage(
 
   // 3. 이미지 데이터 확인 (직접 속성 접근)
   const imageData = candidate.content?.parts?.[0];
-  const inlineData = (imageData as any)?.inlineData;
+  const inlineData = (imageData as unknown as { inlineData?: { data?: string; mimeType?: string } })?.inlineData;
 
   if (!inlineData || !inlineData.data) {
     console.error("❌ No image data in candidate");
