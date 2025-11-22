@@ -198,16 +198,24 @@ export async function generateScript(
     console.log(`\n📝 씬 ${sceneNum} 처리 중...`);
     console.log(`   원본: "${originalScript}" (${originalScript.replace(/\s/g, "").length}자)`);
 
-    // 1. 금지된 패턴 검증 (요약 전)
+    // 1. 괄호 자동 제거 (TTS가 괄호 안 단어를 중복 읽는 문제 방지)
+    let processedScript = originalScript;
     if (originalScript.includes("(") || originalScript.includes(")")) {
-      invalidScenes.push(`씬 ${sceneNum}: 괄호 표현 포함 금지 - "${originalScript}"`);
+      console.warn(`   ⚠️ 괄호 발견 - 자동 제거 중...`);
+      // 괄호와 괄호 안의 내용 제거: "커서(Cursor)" → "커서"
+      processedScript = originalScript.replace(/\([^)]*\)/g, '').trim();
+      // 연속 공백 정리
+      processedScript = processedScript.replace(/\s+/g, ' ');
+      console.log(`   🔧 괄호 제거 후: "${processedScript}" (${processedScript.replace(/\s/g, "").length}자)`);
     }
 
+    // 2. 인사말 검증
     const greetings = ["안녕하세요", "안녕", "여러분", "반갑습니다"];
-    if (greetings.some((greeting) => originalScript.includes(greeting))) {
-      invalidScenes.push(`씬 ${sceneNum}: 인사말 포함 금지 - "${originalScript}"`);
+    if (greetings.some((greeting) => processedScript.includes(greeting))) {
+      invalidScenes.push(`씬 ${sceneNum}: 인사말 포함 금지 - "${processedScript}"`);
     }
 
+    // 3. 설명문 검증
     const explanations = [
       "이야기하겠습니다",
       "소개합니다",
@@ -215,13 +223,13 @@ export async function generateScript(
       "말씀드리겠습니다",
       "에 대해",
     ];
-    if (explanations.some((exp) => originalScript.includes(exp))) {
-      invalidScenes.push(`씬 ${sceneNum}: 설명문 포함 금지 - "${originalScript}"`);
+    if (explanations.some((exp) => processedScript.includes(exp))) {
+      invalidScenes.push(`씬 ${sceneNum}: 설명문 포함 금지 - "${processedScript}"`);
     }
 
-    // 2. 길이 검증 및 AI 요약
+    // 4. 길이 검증 및 AI 요약
     try {
-      const summarized = await validateAndSummarizeScript(originalScript);
+      const summarized = await validateAndSummarizeScript(processedScript);
       parsedJson.scenes[i].script = summarized;
       console.log(`   ✅ 최종: "${summarized}" (${summarized.replace(/\s/g, "").length}자)`);
     } catch (error) {
