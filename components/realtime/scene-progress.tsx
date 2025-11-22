@@ -267,11 +267,14 @@ export function SceneProgress({ projectId }: SceneProgressProps) {
                             src={scene.backgroundAsset.url}
                           />
                         ) : (
-                          <img
-                            alt="배경 이미지"
-                            className="w-full h-20 rounded object-cover"
-                            src={scene.backgroundAsset.url}
-                          />
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              alt="배경 이미지"
+                              className="w-full h-20 rounded object-cover"
+                              src={scene.backgroundAsset.url}
+                            />
+                          </>
                         )}
                       </div>
                     )}

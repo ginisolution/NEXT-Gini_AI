@@ -86,26 +86,28 @@ export async function generateScript(
 2. 씬 구성: 8초씩 나눠서 총 ${duration / 8}개 씬 (Veo 3.1 영상 길이에 맞춤)
 3. 각 씬마다 다음 정보를 포함:
    - 대본 (script): 아바타가 말할 내용
-     * 🚨 **ABSOLUTE LIMIT: 최대 35자 (공백 제외)**
-     * 🚨 **35자 초과 시 즉시 거부됩니다**
-     * **목표 시간: 정확히 7-8초 (초당 4-5자 기준)**
+     * 🚨 **ABSOLUTE LIMIT: 최대 60자 (공백 제외)**
+     * 🚨 **60자 초과 시 즉시 거부됩니다**
+     * **목표 시간: 정확히 6-7초 분량**
      * **문장 스타일: 자연스럽고 친근한 톤 (딱딱한 설명체 금지)**
      * **필수 원칙**:
        - 인사말/자기소개 절대 금지 ("안녕하세요", "여러분" 등)
        - 괄호 표현 절대 금지 ("(잠시 뜸들임)", "(예시)" 등)
        - 설명문 금지 ("~에 대해 이야기하겠습니다", "~를 소개합니다" 등)
-       - 핵심 메시지 1개만 명확하게 전달
-       - 자연스러운 구어체 사용 (~죠, ~네요, ~거든요)
+       - 핵심 메시지를 충분히 설명하되 간결하게 (40~60자 권장)
+       - 자연스러운 구어체 사용 (~죠, ~네요, ~거든요, ~잖아요)
        - 영어는 꼭 필요할 때만 (한글로 대체 가능하면 대체)
-     * ✅ 좋은 예시들 (자연스러운 톤):
-       - "컨텍스트가 코딩을 완전히 바꿔버렸어요." (21자) ← 완벽
-       - "에이전트로 개발 속도가 3배나 빨라졌죠." (22자) ← 완벽
-       - "자동화 덕분에 기능 대부분이 완성됐어요." (22자) ← 완벽
-       - "4060 엄마들이 매일 걷기를 함께해요." (21자) ← 완벽
+       - 구체적인 수치나 예시로 설득력 높이기
+     * ✅ 좋은 예시들 (자연스럽고 적절한 길이):
+       - "클로드 코드는 정말 강력하지만, 무제한 요금제가 없어져서 비용 관리가 필수가 됐어요." (43자) ← 완벽
+       - "MCP 서버들을 전부 연결하면 기능은 좋지만, 오히려 토큰 낭비가 심해질 수 있거든요." (46자) ← 완벽
+       - "코드 분석 에이전트를 활용하면 토큰을 30%나 절약하면서도 더 정확한 분석이 가능해요." (49자) ← 완벽
+       - "컨텍스트 7을 쓰면 AI가 실시간으로 최신 기술 문서를 읽고 코드를 짜줘서 개발이 훨씬 빨라져요." (52자) ← 완벽
      * ❌ 나쁜 예시들 (절대 금지):
-       - "안녕하세요. 자동화를 소개합니다." (인사말 + 설명문)
-       - "결과는 어땠을까요? (잠시 뜸들임)" (괄호 표현)
-       - "스타트업에게 속도는 생명입니다." (딱딱한 설명체)
+       - "안녕하세요. 오늘은 MCP 서버 활용법을 소개합니다." (인사말 + 설명문)
+       - "정말 놀랍죠? (잠시 뜸들임) 이제 자세히 알아볼까요?" (괄호 표현)
+       - "클로드 코드 짱" (너무 짧음, 20자 미만)
+       - "본 발표에서는 AI 코딩 도구의 효율적 활용 방안에 대하여 상세히 설명드리고자 합니다." (딱딱한 설명체)
    - 시각적 설명 (visualDescription): 배경에 표시할 내용 설명 (하위 호환성용)
    - 이미지 프롬프트 (imagePrompt): Nano Banana 이미지 생성 모델용 프롬프트
      * 16:9 비율, 포토리얼리스틱 스타일
@@ -251,13 +253,13 @@ export async function generateScript(
  * Gemini 2.5 Flash - 스크립트 길이 검증 및 요약
  *
  * @param script - 원본 스크립트
- * @returns 35자 이내로 요약된 스크립트
+ * @returns 60자 이내로 요약된 스크립트
  */
 async function validateAndSummarizeScript(script: string): Promise<string> {
   const scriptLength = script.replace(/\s/g, "").length;
 
-  // 이미 35자 이내면 그대로 반환
-  if (scriptLength <= 35) {
+  // 이미 60자 이내면 그대로 반환
+  if (scriptLength <= 60) {
     console.log(`✅ 스크립트 길이 OK: ${scriptLength}자`);
     return script;
   }
@@ -274,22 +276,23 @@ async function validateAndSummarizeScript(script: string): Promise<string> {
   });
 
   const prompt = `
-다음 스크립트를 **정확히 35자 이내 (공백 제외)**로 요약하세요.
+다음 스크립트를 **정확히 60자 이내 (공백 제외)**로 요약하세요.
 
 원본 스크립트:
 "${script}"
 
 요구사항:
-1. 🚨 **절대 제한: 35자 이내 (공백 제외)**
-2. 핵심 메시지 1개만 유지
-3. 자연스러운 구어체 (~죠, ~네요, ~거든요)
+1. 🚨 **절대 제한: 60자 이내 (공백 제외)**
+2. 핵심 메시지를 충분히 설명하되 간결하게 (40~60자 권장)
+3. 자연스러운 구어체 (~죠, ~네요, ~거든요, ~잖아요)
 4. 인사말/설명문 절대 금지
 5. 괄호 표현 절대 금지
 6. 영어는 꼭 필요할 때만
+7. 구체적인 수치나 예시로 설득력 높이기
 
 ✅ 좋은 예시:
-- "컨텍스트가 코딩을 완전히 바꿔버렸어요." (21자)
-- "에이전트로 개발 속도가 3배나 빨라졌죠." (22자)
+- "클로드 코드는 정말 강력하지만, 무제한 요금제가 없어져서 비용 관리가 필수가 됐어요." (43자)
+- "MCP 서버들을 전부 연결하면 기능은 좋지만, 오히려 토큰 낭비가 심해질 수 있거든요." (46자)
 
 **요약된 스크립트만 출력하세요 (설명 없이):**
 `.trim();
@@ -303,17 +306,17 @@ async function validateAndSummarizeScript(script: string): Promise<string> {
   if (!summarized) {
     console.warn(`⚠️ Gemini 요약 실패 → 강제 자르기`);
     console.warn(`   Response structure:`, JSON.stringify(result.response, null, 2).substring(0, 500));
-    const trimmed = script.replace(/\s/g, "").slice(0, 35);
-    console.warn(`   강제 절단: "${trimmed}" (35자)`);
+    const trimmed = script.replace(/\s/g, "").slice(0, 60);
+    console.warn(`   강제 절단: "${trimmed}" (60자)`);
     return trimmed;
   }
 
   const summarizedLength = summarized.replace(/\s/g, "").length;
   console.log(`✅ 요약 완료: ${scriptLength}자 → ${summarizedLength}자`);
 
-  // 요약 후에도 35자 초과 시 강제 자르기
-  if (summarizedLength > 35) {
-    const trimmed = summarized.replace(/\s/g, "").slice(0, 35);
+  // 요약 후에도 60자 초과 시 강제 자르기
+  if (summarizedLength > 60) {
+    const trimmed = summarized.replace(/\s/g, "").slice(0, 60);
     console.warn(`⚠️ 요약 후에도 초과 → 강제 자르기: ${trimmed}`);
     return trimmed;
   }

@@ -674,6 +674,7 @@ export function ProjectDetail({ projectId }: ProjectDetailProps) {
 
               return (
                 <div className="flex flex-col items-center gap-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={avatarAsset.url}
                     alt="Custom Avatar"
