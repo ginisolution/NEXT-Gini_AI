@@ -62,7 +62,8 @@ export async function POST(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    if (project.status !== "scenes_processed") {
+    // scenes_processed 또는 rendered 상태만 렌더링 가능
+    if (project.status !== "scenes_processed" && project.status !== "rendered") {
       return NextResponse.json(
         { error: "Scenes not processed yet. Current status: " + project.status },
         { status: 400 }
