@@ -55,7 +55,7 @@ export const documentValidator = inngest.createFunction(
 
     // 다음 단계: 대본 생성 트리거
     await step.sendEvent("trigger-script-generation", {
-      name: "script/generate.requested",
+      name: "script/generation.requested",  // ✅ 수정: scriptGenerator와 일치하도록 변경
       data: {
         documentId,
         projectId,
