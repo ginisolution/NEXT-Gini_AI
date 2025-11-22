@@ -4,9 +4,7 @@
  * 모든 백그라운드 작업 함수를 export
  */
 
-export { documentValidator } from "./documentValidator";
 export { sceneProcessor } from "./sceneProcessor";
-export { scriptGenerator } from "./scriptGenerator";
 export { avatarDesignGenerator } from "./avatarDesignGenerator";
 export { ttsGenerator } from "./ttsGenerator";
 export { avatarGenerator } from "./avatarGenerator";

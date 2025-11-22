@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { check, NAMESPACES, RELATIONS } from "@/lib/permissions";
 import { uploadFile } from "@/lib/supabase/storage";
-import { sendEvent } from "@/lib/inngest/client";
 import { NextResponse } from "next/server";
 
 /**
@@ -84,15 +83,8 @@ export async function POST(request: Request) {
       },
     });
 
-    // Inngest 이벤트 전송: 문서 검증 시작
-    await sendEvent({
-      name: "document/validate.requested",
-      data: {
-        documentId: document.id,
-        projectId,
-        userId: session.user.id,
-      },
-    });
+    // 참고: 스크립트 생성은 사용자가 수동으로 [스크립트 생성] 버튼을 클릭하여 시작
+    // POST /api/projects/[id]/generate-script
 
     return NextResponse.json(document, { status: 201 });
   } catch (error) {
