@@ -50,11 +50,11 @@ export const videoCompositor = inngest.createFunction(
       }
     });
 
-    // 3. 프로젝트 상태 업데이트 (rendering)
-    await step.run("update-project-status-rendering", async () => {
+    // 3. 프로젝트 상태 업데이트 (scenes_processed)
+    await step.run("update-project-status-scenes-processed", async () => {
       await prisma.project.update({
         where: { id: projectId },
-        data: { status: "rendering" },
+        data: { status: "scenes_processed" },
       });
     });
 
@@ -70,11 +70,9 @@ export const videoCompositor = inngest.createFunction(
       }));
     });
 
-    // 5. 실제 비디오 합성은 AWS Lambda나 별도 서비스에서 처리
-    // 여기서는 메타데이터만 준비하고 실제 FFmpeg 처리는 외부 서비스로 위임
-    // (또는 Next.js에서 직접 처리할 경우 별도 구현 필요)
-
-    // 임시: 메타데이터 저장
+    // 5. 메타데이터 저장
+    // 실제 렌더링은 사용자가 프론트엔드에서 "비디오 렌더링 및 다운로드" 버튼을 클릭하면
+    // /api/projects/[id]/render-download API를 통해 즉시 처리됨
     await step.run("save-composition-metadata", async () => {
       await prisma.project.update({
         where: { id: projectId },
@@ -91,15 +89,6 @@ export const videoCompositor = inngest.createFunction(
           },
         },
       });
-    });
-
-    // 6. 비디오 렌더링 트리거 (실제 FFmpeg 처리)
-    await step.sendEvent("trigger-video-render", {
-      name: "video/render.requested",
-      data: {
-        projectId,
-        sceneData,
-      },
     });
 
     return {
