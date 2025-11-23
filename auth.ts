@@ -70,6 +70,7 @@ export const config = {
     }),
   ],
   callbacks: {
+    ...authConfig.callbacks,
     async signIn({
       user,
       account,
