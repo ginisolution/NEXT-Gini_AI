@@ -1,13 +1,18 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import type { AdapterUser } from "@auth/core/adapters";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import type { NextAuthConfig } from "next-auth";
+import { authConfig } from "@/auth.config";
+import type { User, Account, Profile } from "next-auth";
+import type { JWT } from "next-auth/jwt";
+import type { Session } from "next-auth";
 
 export const config = {
+  ...authConfig,
   adapter: PrismaAdapter(prisma) as any,
   providers: [
     Google({
@@ -65,7 +70,15 @@ export const config = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({
+      user,
+      account,
+      profile,
+    }: {
+      user: User | AdapterUser;
+      account?: Account | null;
+      profile?: Profile;
+    }) {
       // 이메일 인증 확인 (선택적)
       if (!user.email) {
         return false;
@@ -104,7 +117,7 @@ export const config = {
 
       return true;
     },
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       // 초기 로그인 시 사용자 정보를 토큰에 추가
       if (user) {
         const dbUser = await prisma.user.findUnique({
@@ -121,7 +134,7 @@ export const config = {
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       // 토큰에서 세션으로 사용자 정보 전달
       if (token && session.user) {
         session.user.id = token.id as string;
@@ -132,16 +145,11 @@ export const config = {
       return session;
     },
   },
-  pages: {
-    signIn: "/auth/signin",
-    signOut: "/auth/signout",
-    error: "/auth/error",
-  },
   session: {
-    strategy: "jwt", // Credentials provider requires JWT
+    strategy: "jwt" as const, // Credentials provider requires JWT
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   debug: false, // 개발 환경에서도 debug 로그 비활성화
-} satisfies NextAuthConfig;
+};
 
 export const { handlers, auth, signIn, signOut } = NextAuth(config);
