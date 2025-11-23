@@ -85,6 +85,20 @@ export const veoVideoPolling = inngest.createFunction(
     if (statusCheck.error) {
       console.error(`❌ Veo operation failed: ${statusCheck.error}`);
 
+      // Responsible AI 정책 위반 에러 확인
+      const isResponsibleAIError = statusCheck.error.includes("Responsible AI") ||
+                                   statusCheck.error.includes("sensitive words") ||
+                                   statusCheck.error.includes("violate") ||
+                                   statusCheck.error.includes("58061214");
+
+      let userFriendlyError = statusCheck.error;
+      if (isResponsibleAIError) {
+        userFriendlyError = "프롬프트가 Google Responsible AI 정책에 위배되어 차단되었습니다. Gemini가 생성한 프롬프트에서 민감한 단어가 감지되었습니다. 대본을 더 보수적으로 수정하거나 다시 시도해주세요.";
+        console.error(`⚠️ Responsible AI policy violation detected`);
+        console.error(`   This indicates the video prompt contains sensitive content`);
+        console.error(`   Consider regenerating the script with more conservative language`);
+      }
+
       // RenderJob 실패 처리
       await step.run("mark-render-job-error", async () => {
         await prisma.renderJob.updateMany({
@@ -94,7 +108,7 @@ export const veoVideoPolling = inngest.createFunction(
           },
           data: {
             status: "failed",
-            errorMessage: statusCheck.error,
+            errorMessage: userFriendlyError,
           },
         });
       });
@@ -107,7 +121,7 @@ export const veoVideoPolling = inngest.createFunction(
         });
       });
 
-      throw new Error(`Veo operation failed: ${statusCheck.error}`);
+      throw new Error(`Veo operation failed: ${userFriendlyError}`);
     }
 
     // 성공한 경우 - videoBuffer를 다시 가져와서 Supabase Storage에 업로드
