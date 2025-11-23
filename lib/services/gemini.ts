@@ -359,7 +359,11 @@ export async function generateAvatarDesign(settings: {
     generationConfig: {
       temperature: 0.4,
       candidateCount: 1,
-    },
+      responseModalities: ["IMAGE"], // 이미지만 생성
+      imageConfig: {
+        aspectRatio: "1:1", // 아바타는 1:1 (정사각형)
+      },
+    } as any, // TypeScript 타입 우회 (SDK 타입 정의 부족)
   });
 
   // 이미지 데이터 추출
@@ -536,7 +540,11 @@ export async function generateBackgroundImage(
     generationConfig: {
       temperature: 0.4,
       candidateCount: 1,
-    },
+      responseModalities: ["IMAGE"], // 이미지만 생성
+      imageConfig: {
+        aspectRatio: "16:9", // 배경은 16:9 (와이드스크린)
+      },
+    } as any, // TypeScript 타입 우회 (SDK 타입 정의 부족)
   });
 
   // 응답을 에러 발생 전에 로깅 (디버깅용)
