@@ -156,7 +156,9 @@ async function uploadLargeBuffer(
   const normalizedPath = normalizePath(path);
 
   // Blob으로 변환 (resumable upload는 Blob/File 필요)
-  const blob = new Blob([buffer], { type: contentType });
+  // Buffer에서 ArrayBuffer를 추출하여 타입 호환성 보장
+  const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+  const blob = new Blob([arrayBuffer], { type: contentType });
 
   const { data, error } = await supabase.storage
     .from(ASSETS_BUCKET)
