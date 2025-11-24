@@ -207,11 +207,11 @@ export async function generateScript(
       console.log(`   🔧 괄호 제거 후: "${processedScript}" (${processedScript.replace(/\s/g, "").length}자)`);
     }
 
-    // 2. 인사말 검증
-    const greetings = ["안녕하세요", "안녕", "여러분", "반갑습니다"];
-    if (greetings.some((greeting) => processedScript.includes(greeting))) {
-      invalidScenes.push(`씬 ${sceneNum}: 인사말 포함 금지 - "${processedScript}"`);
-    }
+    // 2. 인사말 검증 (비활성화: 길이만 적절하면 인사말 허용)
+    // const greetings = ["안녕하세요", "안녕", "여러분", "반갑습니다"];
+    // if (greetings.some((greeting) => processedScript.includes(greeting))) {
+    //   invalidScenes.push(`씬 ${sceneNum}: 인사말 포함 금지 - "${processedScript}"`);
+    // }
 
     // 3. 설명문 검증
     const explanations = [
