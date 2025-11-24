@@ -81,7 +81,7 @@ export async function uploadFile(
 }
 
 /**
- * 버퍼에서 파일 업로드
+ * 버퍼에서 파일 업로드 (크기에 따라 자동으로 적절한 방식 선택)
  *
  * @param buffer - Buffer 데이터
  * @param path - 저장 경로
@@ -93,9 +93,19 @@ export async function uploadFromBuffer(
   path: string,
   contentType: string
 ): Promise<{ url: string; path: string }> {
-  const supabase = createServiceClient();
+  const MAX_STANDARD_SIZE = 50 * 1024 * 1024; // 50MB
+  const bufferSize = buffer.length;
 
-  // 한글 및 특수문자가 포함된 경로 정규화
+  console.log(`[Storage] Uploading buffer: ${(bufferSize / 1024 / 1024).toFixed(2)} MB`);
+
+  // 50MB 이상이면 resumable upload 사용
+  if (bufferSize > MAX_STANDARD_SIZE) {
+    console.log(`[Storage] Using resumable upload for large file (${(bufferSize / 1024 / 1024).toFixed(2)} MB)`);
+    return uploadLargeBuffer(buffer, path, contentType);
+  }
+
+  // 50MB 이하는 표준 업로드
+  const supabase = createServiceClient();
   const normalizedPath = normalizePath(path);
 
   const { data, error } = await supabase.storage
@@ -113,6 +123,50 @@ export async function uploadFromBuffer(
   const {
     data: { publicUrl },
   } = supabase.storage.from(ASSETS_BUCKET).getPublicUrl(data.path);
+
+  return {
+    url: publicUrl,
+    path: data.path,
+  };
+}
+
+/**
+ * 대용량 버퍼 업로드 (50MB 이상)
+ * Supabase resumable upload 사용
+ *
+ * @param buffer - Buffer 데이터
+ * @param path - 저장 경로
+ * @param contentType - MIME 타입
+ * @returns 업로드된 파일의 공개 URL
+ */
+async function uploadLargeBuffer(
+  buffer: Buffer,
+  path: string,
+  contentType: string
+): Promise<{ url: string; path: string }> {
+  const supabase = createServiceClient();
+  const normalizedPath = normalizePath(path);
+
+  // Blob으로 변환 (resumable upload는 Blob/File 필요)
+  const blob = new Blob([buffer], { type: contentType });
+
+  const { data, error } = await supabase.storage
+    .from(ASSETS_BUCKET)
+    .upload(normalizedPath, blob, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType,
+    });
+
+  if (error) {
+    throw new Error(`Failed to upload large buffer: ${error.message}`);
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(ASSETS_BUCKET).getPublicUrl(data.path);
+
+  console.log(`[Storage] Large file uploaded successfully: ${normalizedPath}`);
 
   return {
     url: publicUrl,

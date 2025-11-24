@@ -205,13 +205,16 @@ export const veoVideoPolling = inngest.createFunction(
         ? fullResult.videoBuffer
         : Buffer.from(fullResult.videoBuffer as unknown as ArrayBuffer);
 
-      console.log(`✅ Veo video fetched: ${videoBuffer.length} bytes`);
+      const videoSizeMB = (videoBuffer.length / 1024 / 1024).toFixed(2);
+      console.log(`✅ Veo video fetched: ${videoSizeMB} MB (${videoBuffer.length} bytes)`);
 
-      // 3. Supabase Storage에 업로드
+      // 3. Supabase Storage에 업로드 (50MB 이상은 자동으로 resumable upload 사용)
       const fileName = `projects/${scene.projectId}/backgrounds/scene_${scene.sceneNumber}_background.mp4`;
+      console.log(`📤 Uploading to Supabase Storage: ${fileName} (${videoSizeMB} MB)`);
+
       const { url, path } = await uploadFromBuffer(videoBuffer, fileName, "video/mp4");
 
-      console.log(`📤 Uploaded to Supabase Storage: ${path}`);
+      console.log(`✅ Upload complete: ${path}`);
 
       return {
         videoUrl: url,
